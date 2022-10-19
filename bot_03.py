@@ -79,8 +79,14 @@ class Record:
     def change_birthday(self, name, value):
         address_book[name].birth_day = Birthday(value)
 
-    def change_phones(self, name, phone):
-        address_book[name].phones = [Phone(phone)]
+    def change_phones(self, name, old_phone, new_phone):
+        phones = [phone.value for phone in address_book[name].phones]
+        index = phones.index(old_phone)
+        phones.insert(index, new_phone)
+        phones.remove(old_phone)
+        address_book[name].phones = []
+        for value in phones:
+            address_book[name].phones.append(Phone(value))
 
     def delete_phones(self, name):
         address_book[name].phones.clear()
@@ -179,7 +185,7 @@ def add(data):
 
             else:
                 record = Record(name)
-                return f"{name} was added, but {phone} cannot be added because of the wrong format"
+                return f"{name} was added, but {phone} cannot be added because of the wrong format, use these formats: (00)-000-0-000 or (00)-000-00-00"
 
         elif len(info) == 2:
 
@@ -246,19 +252,24 @@ def change_birthday(data):
 def change_phones(data):
 
     name = data.split(" ")[1]
-    phone = data.split(" ")[2]
 
-    if name not in address_book:
-        return f"{name} doesn't have any information in Address Book,you can't change it's phones"
-
+    if len(data.split(" ")) < 4:
+        return "Enter this command with the phone number you want to change and its new value"
+    elif len(data.split(" ")) > 4:
+        return "Enter this command with the phone number you want to change and its new value"
     else:
+        phone_to_change = data.split(" ")[2]
+        new_phone = data.split(" ")[3]
 
-        if Phone(phone).value:
-            Record(name).change_phones(name, phone)
-            return f"{name} contact's phones were changed to {phone}"
+        if Phone(phone_to_change).value in [phone.value for phone in address_book[name].phones]:
+            if Phone(new_phone):
+                Record(name).change_phones(name, phone_to_change, new_phone)
+                return f"{name} contact's {phone_to_change} phone was changed to {new_phone}"
+            else:
+                return f"{new_phone} is of the wrong format, use these formats: (00)-000-0-000 or (00)-000-00-00"
 
         else:
-            return f"{phone} has wrong format,use these: (00)-000-0-000 or (00)-000-00-00"
+            return f"{name} doesn't have this phone: {phone_to_change}"
 
 
 @input_error
@@ -366,7 +377,7 @@ def main():
         if user_command.lower() == "hello":
             print(handler(user_command.lower())())
 
-        elif user_command.split(" ")[0].lower() not in COMMANDS.keys():
+        elif user_command.split(" ")[0].lower() not in list(COMMANDS.keys()) + ["exit", "close", "goodbye"]:
             print("No such a command")
 
         elif user_command.lower() in ["exit", "close", "goodbye"]:
